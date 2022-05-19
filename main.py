@@ -33,6 +33,30 @@ def get_exact_solution(x):
     return (4 * x * x) - (4 * x) + (e ** (-x)) + (e ** x) - 2
 
 
+def sweeping_algo(points, h, N):
+    if not abs(2 + h ** 2) > 2:
+        return
+
+    result = [0.0] + [0.0 for _ in range(1, N)] + [BETA]
+    l = [0] + [0 for _ in range(N)]
+    mu = [0.0] + [0.0 for _ in range(1, N)] + [BETA]
+
+    # Forward
+    for i in range(1, N + 1):
+        curr_l = l[i - 1]
+        curr_mu = mu[i - 1]
+        A = 2 + h ** 2
+        B = (h ** 2) * q(points[i - 1])
+        l[i] = 1 / (A - curr_l)
+        mu[i] = (curr_mu - B) / (A - curr_l)
+
+    # Backward
+    for i in range(1, N):
+        result[-i - 1] = l[-i] * result[-i] + mu[-i]
+
+    return result
+
+
 def shooting_algo(points, h):
     def runge_iter_x(x, y, h, cur_val):
         K1 = h * f(x, y)
@@ -86,12 +110,14 @@ def shooting_algo(points, h):
 
 
 def get_result(N):
+    print()
     points, h = get_points(N)
 
+    plt.title(f"Exact and calculated solutions for N={N}")
     plt.plot(points, list(map(lambda x: get_exact_solution(x), points)))
     plt.plot(points, shooting_algo(points, h))
-
-    plt.legend(["Exact solution", "Shooting algorithm", ])
+    plt.plot(points, sweeping_algo(points, h, N))
+    plt.legend(["Exact solution", "Shooting algorithm", "Sweeping algorithm"])
     plt.show()
 
 
